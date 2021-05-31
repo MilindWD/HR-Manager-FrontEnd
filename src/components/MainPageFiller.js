@@ -9,6 +9,7 @@ const MainPageFiller = (props) => {
   return (
     <Container className="align-items-center">
       <Jumbotron className="main-page-filler">
+      <h5 className="my-2" style={{color: '#3459e6', fontWeight: '800'}}>Health and Wellness Health Care Services, Mysuru</h5>
         <h1>Welcome {props.username ? props.username : "to HR Manager"} </h1>
         {!props.username ? (
           <div>

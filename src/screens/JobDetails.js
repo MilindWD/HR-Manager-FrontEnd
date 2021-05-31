@@ -276,7 +276,7 @@ const JobDetails = ({ match }) => {
           <h2 className="text-center">
             {mode === 0 ? "Add Job" : mode === 1 ? "Make payment" : "View Job"}
           </h2>
-          {mode === 2 ? (
+          { job?(mode === 2 ? (
             job.closingDate ? (
               <Alert variant="success">Job Closed</Alert>
             ) : (
@@ -284,7 +284,7 @@ const JobDetails = ({ match }) => {
             )
           ) : (
             <div></div>
-          )}
+          )):<div></div>}
         </Col>
       </Row>
 

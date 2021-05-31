@@ -1545,6 +1545,37 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
 
+"@progress/kendo-drawing@^1.10.1":
+  version "1.10.1"
+  resolved "https://registry.yarnpkg.com/@progress/kendo-drawing/-/kendo-drawing-1.10.1.tgz#399052b18149cc785c48bf7893fd2021fbb9c8f0"
+  integrity sha512-TuGNh7r4HbmE9KB0HOyIPiaW1HBPqjbeGal3C/uqr4Lu1rQSNg1Rl+DjY5C9mKHxXl+L6T0bexLJOANxy8cTpg==
+  dependencies:
+    "@progress/pako-esm" "^1.0.1"
+
+"@progress/kendo-file-saver@^1.0.1":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@progress/kendo-file-saver/-/kendo-file-saver-1.1.0.tgz#d87b18d230b2df39d7eebca7317f5fe3a51b7db2"
+  integrity sha512-26iPl67d0izUlzU6p98QM5f/spOK3QCdmSJrEzGakw1Yp0qyFmp2V9uKeswfWgX0NhKmJApWjlAxxrtRvYjHYA==
+
+"@progress/kendo-licensing@^1.1.4":
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/@progress/kendo-licensing/-/kendo-licensing-1.1.4.tgz#24b9d8241c42b980d4c9940305425f65d27e2b0f"
+  integrity sha512-kCe97pKTfQOiny/odiH93xveRUURdSnm886bPiooJd0t5DRyphrXXF8GY3gl6bS+HRLv5NGrrXeh4UwFyceb4w==
+  dependencies:
+    jsonwebtoken "^8.5.1"
+
+"@progress/kendo-react-pdf@^4.6.0":
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/@progress/kendo-react-pdf/-/kendo-react-pdf-4.6.0.tgz#d752cf8992d7d4cd13046c833d1a887af644329d"
+  integrity sha512-0uOvDWbbwU1l0sBUeUkSdJ1WysU1BwtDwXB5wwn1csVI9mRWlWXu8GlHDVio91Czzjtc55lvI1KNRmfV2RktsA==
+  dependencies:
+    "@progress/kendo-file-saver" "^1.0.1"
+
+"@progress/pako-esm@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@progress/pako-esm/-/pako-esm-1.0.1.tgz#eeb7d2c3f8e865198edf23fb42645bd8cb513a11"
+  integrity sha512-O4A3b1EuE9Xe1pC3Xz9Tcn1M/CYrL71f4y/5TXeytOVTkmkzBgYW97fYP2f+54H0e0erWRaqV/kUUB/a8Uxfbw==
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
