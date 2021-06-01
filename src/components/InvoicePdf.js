@@ -66,7 +66,7 @@ export default class Export extends Component {
                       Health and Wellness Health Care Services (R)
                     </h6>
                     <p style={{ fontSize: "3mm", textAlign: "center" }}>
-                    #788/1, 1st Floor, Kr Mohalla, Mysore - 570004 (Near Andolana Office)
+                    {this.props.address}
                     </p>
                     <Container className="mx-1">
                       <Row>
@@ -158,7 +158,7 @@ export default class Export extends Component {
                   <hr />
                   <Row style={{ fontSize: "3.5mm" }}>
                     <Col xs={6}>
-                      <strong>Contact:</strong> 903511322 , 9739595555
+                      <strong>Contact:</strong> {this.props.contact}
                     </Col>
                     <Col xs={6} className="text-end">
                       <strong>Visit:</strong> website.com{" "}

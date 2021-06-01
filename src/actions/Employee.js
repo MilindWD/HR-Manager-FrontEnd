@@ -18,7 +18,7 @@ const listEmployees = (user) => async (dispatch) => {
             }
         }
         let data;
-        if(!user) data = await (await axios.get('https://hr-manager-hwhcs.herokuapp.com/api/employees', config)).data;
+        if(user.isAdmin) data = await (await axios.get('https://hr-manager-hwhcs.herokuapp.com/api/employees', config)).data;
         else data = await (await axios.get('https://hr-manager-hwhcs.herokuapp.com/api/employees/user/'+user._id, config)).data;
         dispatch({
             type: EMPLOYEE_LIST_SUCCESS,

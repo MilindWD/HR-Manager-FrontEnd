@@ -53,6 +53,7 @@ const Payment = ({ match }) => {
     amount: Number(payment),
     comments: comment,
     date: moment(),
+    user: {_id: userInfo._id}
   };
 
   const handleConfirm = async () => {

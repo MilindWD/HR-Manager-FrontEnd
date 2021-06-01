@@ -97,13 +97,19 @@ const JobDetails = ({ match }) => {
           setEmpName(data.employee.name);
           setjDate(data.joiningDate);
           setcDate(data.closingDate);
+          setPdfAddress(data.user.address);
+          setPdfContact(data.user.contact);
+
         } else if (mode === 0) {
           const { data } = await axios.get(
             `https://hr-manager-hwhcs.herokuapp.com/api/employees/${match.params.id}`,
             config
           );
           setEmpName(data.name);
+          setPdfAddress(data.user.address);
+          setPdfContact(data.user.contact);
         }
+        
         setLoading(false);
       } catch (error) {
         setAuthorization(false);
@@ -139,6 +145,8 @@ const JobDetails = ({ match }) => {
   const [pdfEmployee, setPdfEmployee] = useState("");
   const [pdfDate, setPdfDate] = useState("");
   const [pdfId, setPdfId] = useState("");
+  const [pdfAddress, setPdfAddress] = useState("");
+  const [pdfContact, setPdfContact] = useState("");
   //body
   const addBody = {
     customerName,
@@ -256,6 +264,8 @@ const JobDetails = ({ match }) => {
             customer={customerName}
             closeHandler={modalClose}
             id={pdfId}
+            address={pdfAddress}
+            contact={pdfContact}
           >
             {" "}
           </InvoicePdf>

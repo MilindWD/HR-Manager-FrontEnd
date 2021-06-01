@@ -12,7 +12,7 @@ const listJobs = (user) => async (dispatch) => {
             }
         }
         let data;
-        if(!user) data = await (await axios.get('https://hr-manager-hwhcs.herokuapp.com/api/jobs', config)).data;
+        if(user.isAdmin) data = await (await axios.get('https://hr-manager-hwhcs.herokuapp.com/api/jobs', config)).data;
         else data = await (await axios.get('https://hr-manager-hwhcs.herokuapp.com/api/jobs/user/'+user._id, config)).data;
         dispatch({
             type: JOB_LIST_SUCCESS,
