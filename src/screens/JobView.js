@@ -25,7 +25,7 @@ function employeeLinkFormatter(cell, row, rowIndex) {
   return (
       
     <Link
-      to={`/view/employee/${row.employee._id}`}
+      to={`/view/employee/${row.employee&&row.employee._id}`}
       className="text-decoration-none p-0 font-weight-bold"
     >
       {cell}
@@ -102,6 +102,7 @@ const EmployeeView = () => {
           } else if (userInfo) {
             dispatch(jobActionAll.listJobs(userInfo));
           }
+          
         } catch (error) {
           setAuthorization(false);
         }
@@ -133,16 +134,16 @@ const handleDateFilter = () => {
   setDateChange(true);
 }
 
-const handleClosedFilter = () => {
+const handleOpenFilter = () => {
     let filtered;
     if(dateChange) {
       filtered = jobs.filter(job =>  {
         return moment(job.joiningDate, 'DD-MM-YYYY') >= moment(startDate)
              && moment(job.joiningDate, 'DD-MM-YYYY') <= moment(endDate)
       });
-      filtered = filtered.filter(job => !!job.closingDate)
+      filtered = filtered.filter(job => !job.closingDate)
     }
-    else filtered = jobs.filter(job => !!job.closingDate)
+    else filtered = jobs.filter(job => !job.closingDate)
     setlocalData(filtered);
     setCloseChange(true);
 }
@@ -195,7 +196,7 @@ const handleClosedFilter = () => {
                     </Col>
                     <Col xs={6}>
                     {
-                      closeChange?<div></div>:<Button variant="success" onClick={handleClosedFilter}>Show closed</Button>
+                      closeChange?<div></div>:<Button variant="success" onClick={handleOpenFilter}>Show Open</Button>
 
                     }
                     </Col>
@@ -239,8 +240,11 @@ const handleClosedFilter = () => {
               />
             </div>
           )}
+          
         </ToolkitProvider>
+        
       )}
+      {jobList&&console.log(jobList)}
     </>
   );
 };

@@ -3,13 +3,14 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 //Bootstrap/css imports
-import { Row, Col, Container, Form, Button, Spinner } from "react-bootstrap";
+import { Row, Col, Container, Form, Button, Spinner, Modal } from "react-bootstrap";
 import "react-datetime/css/react-datetime.css";
 import Datetime from "react-datetime";
 
 //components
 import BackBTN from "../components/BackBTN";
 import FormInput from "../components/FormInput";
+import BioPdf from '../components/BioPdf';
 
 //actions
 import employeeActionAll from "../actions/Employee";
@@ -19,9 +20,10 @@ import moment from "moment";
 import axios from "axios";
 import Unauthorized from "../components/Unauthorized";
 import { Link } from "react-router-dom";
-import {validateAddEmployee} from '../utils/formValidation';
+import { validateAddEmployee } from "../utils/formValidation";
 import AlertMessage from "../components/AlertMessage";
 import SuccessInfo from "../components/SuccessInfo";
+import clean from '../utils/objectFilter';
 
 const EmployeeDetails = ({ match }) => {
   //setting mode { 0:  add, 1: update, 2:  view}
@@ -50,23 +52,26 @@ const EmployeeDetails = ({ match }) => {
         if (mode > 0) {
           const config = {
             headers: {
-                'Content-Type': 'application/json',
-                'authorization': `Bearer ${userInfo.token}`
-            }
-        }
-          const { data } = await axios.get(`https://hr-manager-hwhcs.herokuapp.com/api/employees/${match.params.id}`, config);
+              "Content-Type": "application/json",
+              authorization: `Bearer ${userInfo.token}`,
+            },
+          };
+          const { data } = await axios.get(
+            `https://hr-manager-hwhcs.herokuapp.com/api/employees/${match.params.id}`,
+            config
+          );
           setEmployee(data);
-          
+          setdob(data.dob);
+          setsex(data.sex);
+          setisMarried(data.isMarried);
         }
         setLoading(false);
       } catch (error) {
         setAuthorization(false);
         setLoading(false);
       }
-      
-    })()
+    })();
   }, [setEmployee, match, mode, userInfo]);
-
 
   //Add employee details
   const [error, setError] = useState(false);
@@ -83,11 +88,15 @@ const EmployeeDetails = ({ match }) => {
   const [caste, setcaste] = useState("");
   const [languages, setlanguages] = useState("");
   const [education, seteducation] = useState("");
-  const [workExperience, setworkExperience] = useState('0');
-  const user = userInfo?userInfo._id:"";
-  const token = userInfo?userInfo.token:"";
+  const [workExperience, setworkExperience] = useState("0");
+  const user = userInfo ? userInfo._id : "";
+  const token = userInfo ? userInfo.token : "";
   const [loading, setLoading] = useState(false);
-  const [addSuccess, setAddSuccess] = useState(false)
+  const [addSuccess, setAddSuccess] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+
+  //BioPDf
+  const [showBioModal, setShowBioModal] = useState(false);
   //body
   const addBody = {
     name,
@@ -116,26 +125,53 @@ const EmployeeDetails = ({ match }) => {
         setAddSuccess(true);
         setLoading(false);
       });
-      
-    } catch(err) {
+    } catch (err) {
       console.log(err);
       setError(err.message);
       setLoading(false);
     }
-    
   };
 
+  //update handler
+  const updateHandler = async (e) => {
+    try {
+      setLoading(true);
+      const updateBody = clean(addBody); 
+      const verifyBody = {...employee, ...updateBody};
+      validateAddEmployee(verifyBody);
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${addBody.token}`,
+        },
+      };
+      const { data } = await axios.post(`https://hr-manager-hwhcs.herokuapp.com/api/employees/update/${employee._id}`, updateBody, config);
+      setLoading(false);
+      if (data) {
+        setUpdateSuccess(true);
+      }
+    } catch (err) {
+      console.log(err);
+      setError(err.message);
+      setLoading(false);
+    }
+  }
   //render
-  if(addSuccess) {
-    return <SuccessInfo message="Employee added successfully"></SuccessInfo>
+  if (addSuccess||updateSuccess) {
+    return <SuccessInfo message={addSuccess?`Employee added successfully`:`Employee updated successfully`}></SuccessInfo>;
   }
 
-  if (redirect||!authorization) {
-    return <Unauthorized message="Unauthorized"></Unauthorized>
+  if (redirect || !authorization) {
+    return <Unauthorized message="Unauthorized"></Unauthorized>;
   }
 
-  if(!userInfo) {
-    setReload('/');
+  if (!userInfo) {
+    setReload("/");
+  }
+
+  if(showBioModal) {
+    return (<Modal show={true} size="lg" style={{padding: '5mm'}} onClose={() => setShowBioModal(false)}>
+    <Modal.Body className="d-flex justify-content-center"><BioPdf data={employee} close={setShowBioModal} sex={sex} maritalStatus={isMarried}></BioPdf></Modal.Body></Modal>)
   }
 
   return (
@@ -159,177 +195,197 @@ const EmployeeDetails = ({ match }) => {
 
       {/* main details */}
       <Row>
-        <Col sm={{ span: 8, offset: 2 }} lg={{span: 6, offset: 3}}>
-        {loading ? (
-          <Container className="d-flex justify-content-center">
-            <Spinner animation="border" variant="primary" />
-          </Container>
-        ) :
-          <Container>
-          <AlertMessage visible={error} message={error}></AlertMessage>
-            <Form>
-              {/* name */}
-              <FormInput
-                displayName="Name"
-                initialValue={empty ? "" : employee.name}
-                canEdit={mode < 2}
-                handler={setName}
-              ></FormInput>
+        <Col sm={{ span: 8, offset: 2 }} lg={{ span: 6, offset: 3 }}>
+          {loading ? (
+            <Container className="d-flex justify-content-center">
+              <Spinner animation="border" variant="primary" />
+            </Container>
+          ) : (
+            <Container>
+              <AlertMessage visible={error} message={error}></AlertMessage>
+              <Form>
+                {/* name */}
+                <FormInput
+                  displayName="Name"
+                  initialValue={empty ? "" : employee.name}
+                  canEdit={mode < 2}
+                  handler={setName}
+                ></FormInput>
 
-              {/* father's name */}
-              <FormInput
-                displayName="Father's Name"
-                initialValue={empty ? "" : employee.fatherName}
-                canEdit={mode < 2}
-                handler={setfatherName}
-              ></FormInput>
+                {/* father's name */}
+                <FormInput
+                  displayName="Father's Name"
+                  initialValue={empty ? "" : employee.fatherName}
+                  canEdit={mode < 2}
+                  handler={setfatherName}
+                ></FormInput>
 
-              {/* husband's name */}
-              <FormInput
-                displayName="Husband's Name"
-                initialValue={empty ? "" : employee.husbandName}
-                canEdit={mode < 2}
-                handler={sethusbandName}
-              ></FormInput>
+                {/* husband's name */}
+                <FormInput
+                  displayName="Husband's Name"
+                  initialValue={empty ? "" : employee.husbandName}
+                  canEdit={mode < 2}
+                  handler={sethusbandName}
+                ></FormInput>
 
-              {/* address */}
-              <FormInput
-                displayName="Address"
-                initialValue={empty ? "" : employee.address}
-                canEdit={mode < 2}
-                handler={setaddress}
-              ></FormInput>
+                {/* address */}
+                <FormInput
+                  displayName="Address"
+                  initialValue={empty ? "" : employee.address}
+                  canEdit={mode < 2}
+                  handler={setaddress}
+                ></FormInput>
 
-              {/* mobile number */}
-              <FormInput
-                displayName="Mobile Number"
-                initialValue={empty ? "" : employee.mobile}
-                canEdit={mode < 2}
-                handler={setmobile}
-              ></FormInput>
+                {/* mobile number */}
+                <FormInput
+                  displayName="Mobile Number"
+                  initialValue={empty ? "" : employee.mobile}
+                  canEdit={mode < 2}
+                  handler={setmobile}
+                ></FormInput>
 
-              {/* date of birth */}
-              {mode < 2 ? (
+                {/* date of birth */}
+                {mode < 2 ? (
+                  <Form.Group as={Row}>
+                    <Form.Label column xs="6" className="prim-blue">
+                      Date of Birth
+                    </Form.Label>
+                    <Col xs="6">
+                      <Datetime
+                        dateFormat="DD-MM-YYYY"
+                        timeFormat={false}
+                        onChange={(e) => setdob(moment(e).format("DD-MM-YYYY"))}
+                        value={dob}
+                      />
+                    </Col>
+                  </Form.Group>
+                ) : (
+                  <FormInput
+                    displayName="Date of Birth"
+                    initialValue={empty ? "" : employee.dob}
+                    canEdit={mode < 2}
+                    handler={setdob}
+                  ></FormInput>
+                )}
+
+                {/* age */}
+                <FormInput
+                  displayName="Age"
+                  initialValue={empty ? "" : employee.age}
+                  canEdit={mode < 2}
+                  handler={setage}
+                ></FormInput>
+
+                {/* Gender */}
                 <Form.Group as={Row}>
                   <Form.Label column xs="6" className="prim-blue">
-                    Date of Birth
+                    Gender
                   </Form.Label>
                   <Col xs="6">
-                    <Datetime
-                      dateFormat="DD-MM-YYYY"
-                      timeFormat={false}
-                      onChange={(e) => setdob(moment(e).format("DD-MM-YYYY"))}
-                    />
+                    <Form.Control
+                      as="select"
+                      disabled={mode === 2}
+                      onChange={(e) => setsex(e.target.value)}
+                      value={sex?sex:'Male'}
+                      
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </Form.Control>
                   </Col>
                 </Form.Group>
-              ) : (
+                {console.log(sex)}
+                {/* caste */}
                 <FormInput
-                  displayName="Date of Birth"
-                  initialValue={empty ? "" : employee.dob}
+                  displayName="Caste"
+                  initialValue={empty ? "" : employee.caste}
                   canEdit={mode < 2}
-                  handler={setdob}
+                  handler={setcaste}
                 ></FormInput>
-              )}
 
-              {/* age */}
-              <FormInput
-                displayName="Age"
-                initialValue={empty ? "" : employee.age}
-                canEdit={mode < 2}
-                handler={setage}
-              ></FormInput>
+                {/* marital status */}
+                <Form.Group as={Row}>
+                  <Form.Label column xs="6" className="prim-blue">
+                    Marital Status
+                  </Form.Label>
+                  <Col xs="6">
+                    <Form.Control
+                      as="select"
+                      disabled={mode === 2}
+                      onChange={(e) => setisMarried(e.target.value)}
+                      value={isMarried?isMarried:"Not Married"}
+                    >
+                      <option value="Married">Married</option>
+                      <option value="Not Married">Not Married</option>
+                    </Form.Control>
+                  </Col>
+                </Form.Group>
 
-              {/* Gender */}
-              <Form.Group as={Row}>
-                <Form.Label column xs="6" className="prim-blue">
-                  Gender
-                </Form.Label>
-                <Col xs="6">
-                  <Form.Control
-                    as="select"
-                    disabled={mode === 2}
-                    onChange={(e) => setsex(e.target.value)}
+                {/* languages */}
+                <FormInput
+                  displayName="Languages"
+                  initialValue={empty ? "" : employee.languages}
+                  canEdit={mode < 2}
+                  handler={setlanguages}
+                ></FormInput>
+
+                {/* Education */}
+                <FormInput
+                  displayName="Education"
+                  initialValue={empty ? "" : employee.education}
+                  canEdit={mode < 2}
+                  handler={seteducation}
+                ></FormInput>
+
+                {/* work exp */}
+                <FormInput
+                  displayName="Work Experience"
+                  initialValue={empty ? "" : employee.workExperience}
+                  canEdit={mode < 2}
+                  handler={setworkExperience}
+                ></FormInput>
+
+                {/* action button */}
+                {mode !== 2 ? (
+                  <Button
+                    className="my-3 mx-auto block-button"
+                    variant="primary"
+                    type="submit"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (mode === 0) {
+                        addSubmitHandler(e);
+                      } else if(mode === 1) {
+                        updateHandler();
+                      }
+                    }}
                   >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </Form.Control>
-                </Col>
-              </Form.Group>
-
-              {/* caste */}
-              <FormInput
-                displayName="Caste"
-                initialValue={empty ? "" : employee.caste}
-                canEdit={mode < 2}
-                handler={setcaste}
-              ></FormInput>
-
-              {/* marital status */}
-              <Form.Group as={Row}>
-                <Form.Label column xs="6" className="prim-blue">
-                  Marital Status
-                </Form.Label>
-                <Col xs="6">
-                  <Form.Control
-                    as="select"
-                    disabled={mode === 2}
-                    onChange={(e) => setisMarried(e.target.value)}
-                  >
-                    <option value="Married">Not Married</option>
-                    <option value="Not Married">Married</option>
-                  </Form.Control>
-                </Col>
-              </Form.Group>
-
-              {/* languages */}
-              <FormInput
-                displayName="Languages"
-                initialValue={empty ? "" : employee.languages}
-                canEdit={mode < 2}
-                handler={setlanguages}
-              ></FormInput>
-
-              {/* Education */}
-              <FormInput
-                displayName="Education"
-                initialValue={empty ? "" : employee.education}
-                canEdit={mode < 2}
-                handler={seteducation}
-              ></FormInput>
-
-              {/* work exp */}
-              <FormInput
-                displayName="Work Experience"
-                initialValue={empty ? "" : employee.workExperience}
-                canEdit={mode < 2}
-                handler={setworkExperience}
-              ></FormInput>
-
-              {/* action button */}
-              {mode !== 2 ? (
-                <Button
-                  className="my-3 mx-auto block-button"
-                  variant="primary"
-                  type="submit"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (mode === 0) {
-                      addSubmitHandler(e);
-                    }
-                  }}
-                >
-                  {mode === 0 ? "Add Employee" : "Update Employee"}
-                </Button>
-              ) : (
-                ""
-              )}
-              {
-                mode===2?<Link to={`/add/job/${employee._id}`}> <Button varaint="warning" className="my-3 block-button">Assign Job</Button></Link>:<></>
-              }
-            </Form>
-          </Container>
-            }
+                    {mode === 0 ? "Add Employee" : "Update Employee"}
+                  </Button>
+                ) : (
+                  ""
+                )}
+                {mode === 2 && (
+                  <Link to={`/add/job/${employee._id}`}>
+                    <Button varaint="warning" className="my-3 block-button">
+                      Assign Job
+                    </Button>
+                  </Link>
+                )}
+                {mode === 2 && (
+                  <div>
+                  <Link to={`/update/employee/${employee._id}`} onClick={updateHandler}>
+                  <Button variant="info" className="my-2">Update/Edit Profile</Button>
+                  </Link>
+                    <Button variant="info" className="my-2 float-end" onClick={() => {
+                      setShowBioModal(true);
+                    }}>Download Bio</Button>
+                  </div>
+                )}
+              </Form>
+            </Container>
+          )}
         </Col>
       </Row>
     </>

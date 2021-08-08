@@ -138,18 +138,37 @@ export default class Export extends Component {
                           Rs. {this.props.amount || 0}
                         </p>
                       </Container>
+                      <Container className="px-4">
+                        <p>
+                          <strong
+                            style={{ fontSize: "4mm", marginBottom: "0" }}
+                          >
+                            Comments:{" "}
+                          </strong>
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "3.5mm",
+                            height: "7mm",
+                            borderBottom: "1px solid LightGray",
+                            marginTop: "0",
+                          }}
+                        >
+                          {this.props.comment || ""}
+                        </p>
+                      </Container>
                       <Container
                         className="px-4"
                         style={{
                           fontSize: "3.7mm",
                           fontWeight: "500",
-                          paddingTop: "35mm",
+                          paddingTop: "25mm",
                         }}
                       >
                         <Row>
                           <Col xs={6}>Accountant</Col>
                           <Col xs={6} className="text-end">
-                            Approved By
+                            Employee 
                           </Col>
                         </Row>
                       </Container>
@@ -161,7 +180,7 @@ export default class Export extends Component {
                       <strong>Contact:</strong> {this.props.contact}
                     </Col>
                     <Col xs={6} className="text-end">
-                      <strong>Visit:</strong> website.com{" "}
+                      <strong>Visit:</strong> <a target="_blank" rel="noreferrer" href="http://healthwellnesscare.org">www.healthwellness.org</a>{" "}
                     </Col>
                   </Row>
                 </Container>

@@ -99,7 +99,7 @@ const JobDetails = ({ match }) => {
           setcDate(data.closingDate);
           setPdfAddress(data.user.address);
           setPdfContact(data.user.contact);
-
+          setContinueStartDate(moment(data.joiningDate));
         } else if (mode === 0) {
           const { data } = await axios.get(
             `https://hr-manager-hwhcs.herokuapp.com/api/employees/${match.params.id}`,
@@ -109,7 +109,7 @@ const JobDetails = ({ match }) => {
           setPdfAddress(data.user.address);
           setPdfContact(data.user.contact);
         }
-        
+
         setLoading(false);
       } catch (error) {
         setAuthorization(false);
@@ -123,6 +123,7 @@ const JobDetails = ({ match }) => {
       setPdfEmployee(empName);
       setPdfDate(moment(row.date).format("DD-MM-YYYY"));
       setPdfId(row.invoiceId);
+      setPdfComment(row.comments);
       setShowModal(true);
     },
   };
@@ -138,15 +139,23 @@ const JobDetails = ({ match }) => {
   const [advanceAmount, setadvanceAmount] = useState(0);
   const token = userInfo ? userInfo.token : "";
   const user = userInfo ? userInfo._id : "";
-
+  const [showClosingDatePicker, setShowClosingDatePicker] = useState(false);
+  const [closingDate, setClosingDate] = useState(moment().format("DD-MM-YYYY"));
   const [fixedPaymentChange, setfixedPaymentChange] = useState(false);
 
+  //pdfs
   const [pdfAmount, setPdfAmount] = useState("");
   const [pdfEmployee, setPdfEmployee] = useState("");
   const [pdfDate, setPdfDate] = useState("");
   const [pdfId, setPdfId] = useState("");
   const [pdfAddress, setPdfAddress] = useState("");
   const [pdfContact, setPdfContact] = useState("");
+  const [pdfComment, setPdfComment] = useState("");
+
+  //continue
+  const [showContinueModal, setShowContinueModal] = useState(false);
+  const [continueStartDate, setContinueStartDate] = useState("");
+  const [continueEndDate, setContinueEndDate] = useState("");
   //body
   const addBody = {
     customerName,
@@ -175,7 +184,11 @@ const JobDetails = ({ match }) => {
           authorization: `Bearer ${token}`,
         },
       };
-      const { data } = await axios.post("https://hr-manager-hwhcs.herokuapp.com/api/jobs/assign", addBody, config);
+      const { data } = await axios.post(
+        "https://hr-manager-hwhcs.herokuapp.com/api/jobs/assign",
+        addBody,
+        config
+      );
       setLoading(false);
       if (data) {
         setAddSuccess(true);
@@ -197,12 +210,15 @@ const JobDetails = ({ match }) => {
       };
       const { data } = await axios.post(
         `https://hr-manager-hwhcs.herokuapp.com/api/jobs/close/${job._id}`,
-        {},
+        {
+          closingDate,
+        },
         config
       );
       setLoading(false);
       if (data) {
         setCloseSuccess(true);
+        setShowClosingDatePicker(false);
       }
     } catch (err) {
       setAuthorization(false);
@@ -232,12 +248,48 @@ const JobDetails = ({ match }) => {
     }
   };
 
+  const continueJobHandler = async (e) => {
+    try {
+      setShowContinueModal(false);
+      setLoading(true);
+      const continueBody = {
+        customerName: job.customerName,
+        employee: job.employee,
+        joiningDate: moment(continueStartDate)._i,
+        fixedPayment: job.fixedPayment,
+        totalAmount: 0,
+        advanceAmount: 0,
+        balanceAmount: Number(fixedPayment),
+        payments: [],
+        user,
+      };
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+      };
+      const { data } = await axios.post(
+        "https://hr-manager-hwhcs.herokuapp.com/api/jobs/assign",
+        continueBody,
+        config
+      );
+      setLoading(false);
+      if (data) {
+        setAddSuccess(true);
+      }
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
   const modalClose = (e) => {
     setShowModal(false);
   };
 
   //render
-  if (redirect||!authorization) {
+  if (redirect || !authorization) {
     return <Unauthorized message="Unauthorized"></Unauthorized>;
   }
 
@@ -266,10 +318,50 @@ const JobDetails = ({ match }) => {
             id={pdfId}
             address={pdfAddress}
             contact={pdfContact}
+            comment={pdfComment}
           >
             {" "}
           </InvoicePdf>
         </Modal.Body>
+      </Modal>
+    );
+  }
+
+  if (showContinueModal) {
+    return (
+      <Modal
+        show={true}
+        size="md"
+        onClose={() => setShowContinueModal(false)}
+        centered
+      >
+        <Modal.Header>
+          <Modal.Title style={{ textAlign: "center" }}>
+            Continue Job
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="d-flex justify-content-center">
+          <Row>
+            <Col xs="12">Start Date</Col>
+            <Col xs="12">
+              <Datetime
+                dateFormat="DD-MM-YYYY"
+                timeFormat={false}
+                onChange={(e) =>
+                  setContinueStartDate(moment(e).format("DD-MM-YYYY"))
+                }
+              />
+            </Col>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="danger" onClick={() => setShowContinueModal(false)}>
+            Close
+          </Button>
+          <Button variant="success" onClick={continueJobHandler}>
+            Continue Job
+          </Button>
+        </Modal.Footer>
       </Modal>
     );
   }
@@ -286,15 +378,19 @@ const JobDetails = ({ match }) => {
           <h2 className="text-center">
             {mode === 0 ? "Add Job" : mode === 1 ? "Make payment" : "View Job"}
           </h2>
-          { job?(mode === 2 ? (
-            job.closingDate ? (
-              <Alert variant="success">Job Closed</Alert>
+          {job ? (
+            mode === 2 ? (
+              job.closingDate ? (
+                <Alert variant="success">Job Closed</Alert>
+              ) : (
+                <Alert variant="warning">Job is Open</Alert>
+              )
             ) : (
-              <Alert variant="warning">Job is Open</Alert>
+              <div></div>
             )
           ) : (
             <div></div>
-          )):<div></div>}
+          )}
         </Col>
       </Row>
 
@@ -365,25 +461,32 @@ const JobDetails = ({ match }) => {
                 {/* Fixed payment */}
                 <Form.Group as={Row}>
                   <Form.Label column xs="6" className="prim-blue">
-                    {(mode === 2 && !job.closingDate)&&fixedPaymentChange ? (
-                      <Button variant="warning" onClick={fixedPaymentUpdateHandler}>Update</Button>
+                    {mode === 2 && !job.closingDate && fixedPaymentChange ? (
+                      <Button
+                        variant="warning"
+                        onClick={fixedPaymentUpdateHandler}
+                      >
+                        Update
+                      </Button>
                     ) : (
                       "Fixed Payment"
                     )}
                   </Form.Label>
                   <Col xs="6">
                     <Form.Control
-                      readOnly={(job.closingDate||!(mode===2&&fixedPaymentChange))&&!(mode===0)}
+                      readOnly={
+                        (job.closingDate ||
+                          !(mode === 2 && fixedPaymentChange)) &&
+                        !(mode === 0)
+                      }
                       defaultValue={empty ? "" : job.fixedPayment}
                       onChange={(e) => {
                         setfixedPayment(e.target.value);
                       }}
                       onClick={(e) => {
-                        if(job&&!job.closingDate) {
+                        if (job && !job.closingDate) {
                           setfixedPaymentChange(true);
-                          
                         }
-                        
                       }}
                     />
                   </Col>
@@ -436,34 +539,57 @@ const JobDetails = ({ match }) => {
                 >
                   Add job
                 </Button>
-              ) : !job.closingDate ? (
+              ) : !job.closingDate || job.totalAmount !== job.fixedPayment ? (
                 <div>
                   <Link to={`/payment/${job._id}`}>
                     <Button variant="primary" className="my-3">
                       Make a payment
                     </Button>
                   </Link>
-                  <OverlayTrigger
-                    placement="bottom"
-                    overlay={
-                      job.totalAmount === job.fixedPayment ? (
-                        <div></div>
-                      ) : (
-                        <Tooltip>Please make full payment</Tooltip>
-                      )
-                    }
-                  >
+                  {!job.closingDate && (
                     <Button
                       variant="danger"
                       className="m-3"
-                      active={!(job.totalAmount === job.fixedPayment)}
-                      onClick={
-                        job.totalAmount === job.fixedPayment && jobCloseHandler
-                      }
+                      onClick={(e) => setShowClosingDatePicker(true)}
                     >
                       Close Job
                     </Button>
-                  </OverlayTrigger>
+                  )}
+                  {showClosingDatePicker && (
+                    <Modal.Dialog>
+                      <Modal.Header>
+                        <Modal.Title>Are you sure?</Modal.Title>
+                      </Modal.Header>
+
+                      <Modal.Body>
+                        <Row>
+                          <Col xs={{ span: 4 }}>Closing Date:</Col>
+                          <Col xs={{ span: 8 }}>
+                            <Datetime
+                              dateFormat="DD-MM-YYYY"
+                              timeFormat={false}
+                              initialValue={moment()}
+                              onChange={(e) =>
+                                setClosingDate(moment(e).format("DD-MM-YYYY"))
+                              }
+                            />
+                          </Col>
+                        </Row>
+                      </Modal.Body>
+
+                      <Modal.Footer>
+                        <Button
+                          variant="success"
+                          onClick={(e) => setShowClosingDatePicker(false)}
+                        >
+                          Go Back
+                        </Button>
+                        <Button variant="danger" onClick={jobCloseHandler}>
+                          Close Job
+                        </Button>
+                      </Modal.Footer>
+                    </Modal.Dialog>
+                  )}
                 </div>
               ) : (
                 <div></div>
@@ -481,6 +607,15 @@ const JobDetails = ({ match }) => {
                 />
               ) : (
                 <div></div>
+              )}
+              {mode === 2 && (
+                <Button
+                  className="float-end"
+                  variant="info"
+                  onClick={() => setShowContinueModal(true)}
+                >
+                  Continue for next month
+                </Button>
               )}
             </Container>
           </Col>
